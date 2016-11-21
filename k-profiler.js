@@ -18,29 +18,38 @@
 var fs = require('fs');
 var v8profiler = require('v8-profiler');
 
-var lastProfileSignalTime = 0           // detect back-to-back SIGUSR2 signals
-var isProfiling = false                 // set when gathering execution profile data
-var isBusy = false                      // set when busy saving profile
-var startProfiler = null                // execution profile capture start timer
+function KProfiler( ) {
+    this.lastProfileSignalTime = 0;     // detect back-to-back SIGUSR2 signals
+    this.isProfiling = false;           // set when gathering execution profile data
+    this.isBusy = false;                // set when busy saving profile
+    this.startProfiler = null;          // execution profile capture start timer
+}
 
-/*
- * use v8-profiler to capture an execution profile on a single SIGUSR2 signal,
- * or save a heap snapshot on two back-to-back USR2 signals
- */
-process.on('SIGUSR2', function() {
+KProfiler.prototype.install = function install() {
+    process.on('SIGUSR2', this.onSignal);
+    return this;
+};
+
+KProfiler.prototype.uninstall = function uninstall() {
+    process.removeListener('SIGUSR2', this.onSignal);
+    return this;
+};
+
+KProfiler.prototype.onSignal = function onSignal() {
+    var self = this;
     var now = Date.now();
 
-    if (isBusy) {
+    if (this.isBusy) {
         console.log("%s -- k-profiler: still busy, cannot start/stop a profile now", new Date().toISOString());
         return;
     }
 
-    if (isProfiling) {
+    if (this.isProfiling) {
         // save the execution profile currently being captured
-        isBusy = true;
+        this.isBusy = true;
         var profile = v8profiler.stopProfiling('');
-        startProfiler = null;
-        isProfiling = false;
+        this.startProfiler = null;
+        this.isProfiling = false;
         if (!profile) {
             console.log("%s -- k-profiler: unable to obtain execution profile", new Date().toISOString());
             return;
@@ -52,34 +61,34 @@ process.on('SIGUSR2', function() {
             .on('error', function(err) {
                 console.log("%s -- k-profiler: unable to save execution profile:", err.stack);
                 profile.delete();
-                isBusy = false;
+                self.isBusy = false;
             })
             .on('finish', function() {
                 console.log("%s -- k-profiler: saved execution profile to %s", new Date().toISOString(), profileFilename);
                 profile.delete();
-                isBusy = false;
+                self.isBusy = false;
             });
     }
     else {
         // unless another signal arrives soon, start capturing the execution profile
-        if (!startProfiler) {
-            startProfiler = setTimeout(function() {
+        if (!this.startProfiler) {
+            this.startProfiler = setTimeout(function() {
                 console.log("%s -- k-profiler: capturing execution profile", new Date().toISOString());
                 v8profiler.startProfiling('', true);
-                isProfiling = true;
+                self.isProfiling = true;
             }, 200);
         }
 
         // on two signals back-to-back save a heap snapshot
         // Note: this is a blocking operation proportional to heap size, use with care.
-        if (now < lastProfileSignalTime + 200) {
-            if (startProfiler) {
-                clearTimeout(startProfiler);
-                startProfiler = null;
+        if (now < this.lastProfileSignalTime + 200) {
+            if (this.startProfiler) {
+                clearTimeout(this.startProfiler);
+                this.startProfiler = null;
             }
             console.log("%s -- k-profiler: capturing heap snapshot", new Date().toISOString());
 
-            isBusy = true;
+            this.isBusy = true;
             var profile = v8profiler.takeSnapshot();
             var profileFilename = 'heapdump-' + new Date(now).toISOString() + '.heapsnapshot';
             profile.export()
@@ -87,16 +96,19 @@ process.on('SIGUSR2', function() {
                 .on('error', function(err) {
                     console.log("%s -- k-profiler: unable to save heap snapshot:", err.stack);
                     profile.delete();
-                    isBusy = false;
+                    self.isBusy = false;
                 })
                 .on('finish', function() {
                     console.log("%s -- k-profiler: saved heap snapshot to %s", new Date().toISOString(), profileFilename);
                     profile.delete();
-                    isBusy = false;
+                    self.isBusy = false;
                 });
         }
         else {
-            lastProfileSignalTime = now;
+            this.lastProfileSignalTime = now;
         }
     }
-})
+}
+
+
+module.exports = new KProfiler().install();
