@@ -88,6 +88,24 @@ describe ('k-profiler', function() {
         }, 100)
     })
 
+    it ('should not create files if uninstalled', function(done) {
+        // listen for created files
+        function onFinish() { done(new Error("should not have been called")) }
+        profiler.on('finish', onFinish);
+        // listen for the signal else process exits
+        process.on('SIGUSR2', function(){});
+
+        // ask for a heap snapshot
+        profiler.uninstall();
+        process.kill(process.pid, 'SIGUSR2');
+        process.kill(process.pid, 'SIGUSR2');
+        setTimeout(function() {
+            profiler.removeListener('finish', onFinish);
+            profiler.install();
+            done();
+        }, 100);
+    })
+
     describe ('edge cases', function() {
 
         it ('should ignore signal during heap snapshot save', function(done) {
