@@ -15,8 +15,9 @@
 
 'use strict';
 
-var fs = require('fs');
 var assert = require('assert');
+var fs = require('fs');
+var events = require('events');
 var profiler = require('./');
 
 // wait for the file size to stop growing
@@ -36,6 +37,16 @@ function waitForWrite(filename, callback) {
 }
 
 describe ('k-profiler', function() {
+
+    it ('should return a KProfiler object', function(done) {
+        assert.equal(profiler.constructor.name, 'KProfiler');
+        done();
+    })
+
+    it ('should be an event emitter', function(done) {
+        assert.ok(profiler instanceof events.EventEmitter);
+        done();
+    })
 
     it ('should capture an execution trace', function(done) {
         var before = new Date().toISOString();

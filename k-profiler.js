@@ -17,13 +17,17 @@
 
 var fs = require('fs');
 var v8profiler = require('v8-profiler');
+var events = require('events');
+var util = require('util');
 
 function KProfiler( ) {
+    events.EventEmitter.call(this);
     this.lastProfileSignalTime = 0;     // detect back-to-back SIGUSR2 signals
     this.isProfiling = false;           // set when gathering execution profile data
     this.isBusy = false;                // set when busy saving profile
     this.startProfiler = null;          // execution profile capture start timer
 }
+util.inherits(KProfiler, events.EventEmitter);
 
 KProfiler.prototype.install = function install() {
     process.on('SIGUSR2', this.onSignal);
@@ -62,11 +66,13 @@ KProfiler.prototype.onSignal = function onSignal() {
                 console.log("%s -- k-profiler: unable to save execution profile:", err.stack);
                 profile.delete();
                 self.isBusy = false;
+                self.emit('error', err);
             })
             .on('finish', function() {
                 console.log("%s -- k-profiler: saved execution profile to %s", new Date().toISOString(), profileFilename);
                 profile.delete();
                 self.isBusy = false;
+                self.emit('finish', profileFilename);
             });
     }
     else {
@@ -97,11 +103,13 @@ KProfiler.prototype.onSignal = function onSignal() {
                     console.log("%s -- k-profiler: unable to save heap snapshot:", err.stack);
                     profile.delete();
                     self.isBusy = false;
+                    self.emit('error', err);
                 })
                 .on('finish', function() {
                     console.log("%s -- k-profiler: saved heap snapshot to %s", new Date().toISOString(), profileFilename);
                     profile.delete();
                     self.isBusy = false;
+                    self.emit('finish', profileFilename);
                 });
         }
         else {

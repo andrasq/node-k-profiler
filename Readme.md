@@ -29,9 +29,10 @@ Files
 
 Execution traces are named eg `v8profile-2016-11-21T18:21:41.345Z-cpuprofile`.
 Heap snapshots are named eg `heapdump-2016-11-21T18:21:41.345Z-heapsnapshot`.
+Files are placed into the app working directory.
 
-Files are placed into the app working directory.  They can be viewed with Chrome or Opera
-by loading them with Profiles : Load under Tools : More Tools : Developer Tools.
+Traces and snapshots can be viewed with Chrome or Opera by loading them with
+Profiles : Load under Tools : More Tools : Developer Tools.
 
 
 Related Work
@@ -39,4 +40,4 @@ Related Work
 
 - [qrusage](https://npmjs.org/package/qrusage) - fast `getrusage(2)` bindigs to report cpu usage
 - [heapdump](https://npmjs.org/package/heapdump) _ save heap snapshots on SIGUSR2
-- [v8-profiler](https://npmjs.org/package/v8-profiler)
+- [v8-profiler](https://npmjs.org/package/v8-profiler) - v8 execution profiler
