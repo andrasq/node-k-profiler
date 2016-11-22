@@ -20,6 +20,7 @@ var v8profiler = require('v8-profiler');
 var events = require('events');
 var util = require('util');
 
+
 function KProfiler( ) {
     events.EventEmitter.call(this);
     this.lastProfileSignalTime = 0;     // detect back-to-back SIGUSR2 signals
@@ -29,17 +30,6 @@ function KProfiler( ) {
     this._handler = null;
 }
 util.inherits(KProfiler, events.EventEmitter);
-
-KProfiler.prototype.install = function install() {
-    this._handler = this.onSignal.bind(this);
-    process.on('SIGUSR2', this._handler);
-    return this;
-};
-
-KProfiler.prototype.uninstall = function uninstall() {
-    process.removeListener('SIGUSR2', this._handler);
-    return this;
-};
 
 KProfiler.prototype.onSignal = function onSignal() {
     var self = this;
@@ -62,7 +52,7 @@ KProfiler.prototype.onSignal = function onSignal() {
         }
 
         var profileFilename = 'v8profile-' + new Date().toISOString() + '.cpuprofile';
-        this.exportProfile(profile, 'execution profile', profileFilename);
+        this._exportProfile(profile, 'execution profile', profileFilename);
     }
     else {
         // unless another signal arrives soon, start capturing the execution profile
@@ -86,7 +76,7 @@ KProfiler.prototype.onSignal = function onSignal() {
             this.isBusy = true;
             var profile = v8profiler.takeSnapshot();
             var profileFilename = 'heapdump-' + new Date(now).toISOString() + '.heapsnapshot';
-            this.exportProfile(profile, 'heap snapshot', profileFilename);
+            this._exportProfile(profile, 'heap snapshot', profileFilename);
         }
         else {
             this.lastProfileSignalTime = now;
@@ -94,7 +84,18 @@ KProfiler.prototype.onSignal = function onSignal() {
     }
 }
 
-KProfiler.prototype.exportProfile = function exportProfile( profile, profileName, profileFilename, maybeCallback ) {
+KProfiler.prototype.install = function install() {
+    this._handler = this.onSignal.bind(this);
+    process.on('SIGUSR2', this._handler);
+    return this;
+};
+
+KProfiler.prototype.uninstall = function uninstall() {
+    process.removeListener('SIGUSR2', this._handler);
+    return this;
+};
+
+KProfiler.prototype._exportProfile = function exportProfile( profile, profileName, profileFilename, maybeCallback ) {
     var self = this;
     profile.export()
         .pipe(fs.createWriteStream(profileFilename))

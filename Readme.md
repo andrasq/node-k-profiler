@@ -6,7 +6,7 @@ no-code-needed convenient like [heapdump](https://npmjs.org/package/heapdump).
 
 Summary:
 
-    require('k-profiler')
+    require('k-profiler');
 
 K-profiler installs a signal handler for SIGUSR2, causing the app to toggle
 execution trace capture on a single USR2 signal, and to save a heap snapshot on two
@@ -33,6 +33,22 @@ Files are placed into the app working directory.
 
 Traces and snapshots can be viewed with Chrome or Opera by loading them with
 Profiles : Load under Tools : More Tools : Developer Tools.
+
+
+Api
+---
+
+    var profiler = require('k-profiler');
+
+### profiler.install( )
+
+Respond to SIGUSR2 events by writing process traces or heap snapshots.
+This is the default, and is done automatically when `k-profiler` is included.
+
+### profiler.uninstall( )
+
+Do not response to signals, Let the system handle SIGUSR2 events as it normally
+does.  Note that the default action on an uncaught signal is to exit.
 
 
 Related Work
