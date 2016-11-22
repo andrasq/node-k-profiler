@@ -66,7 +66,7 @@ describe ('k-profiler', function() {
                     done();
                 })
             }, 100);
-        }, 250)
+        }, 50+5)
     })
 
     it ('should capture a heap snapshot', function(done) {
@@ -85,7 +85,7 @@ describe ('k-profiler', function() {
                 fs.unlinkSync(newFiles[0]);
                 done();
             })
-        }, 250)
+        }, 100)
     })
 
     describe ('edge cases', function() {
@@ -111,7 +111,7 @@ describe ('k-profiler', function() {
                     fs.unlinkSync(newFiles[0]);
                     done();
                 })
-            }, 400);
+            }, 100);
         })
 
         it ('should stop execution trace on back-to-back signals heap snapshot request', function(done) {
@@ -145,9 +145,9 @@ describe ('k-profiler', function() {
                                 done();
                             })
                         })
-                    }, 400);
-                }, 250);
-            }, 250);
+                    }, 200);
+                }, 100);
+            }, 50+5);
         })
 
     })

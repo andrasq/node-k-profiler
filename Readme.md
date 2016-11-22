@@ -47,7 +47,7 @@ This is the default, and is done automatically when `k-profiler` is included.
 
 ### profiler.uninstall( )
 
-Do not response to signals, Let the system handle SIGUSR2 events as it normally
+Do not response to signals, let the system handle SIGUSR2 events as it normally
 does.  Note that the default action on an uncaught signal is to exit.
 
 

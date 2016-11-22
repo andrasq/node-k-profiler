@@ -27,6 +27,7 @@ function KProfiler( ) {
     this.isProfiling = false;           // set when gathering execution profile data
     this.isBusy = false;                // set when busy saving profile
     this.startProfiler = null;          // execution profile capture start timer
+    this.maxSignalDelay = 50;           // longest back-to-back signal spacing
     this._handler = null;
 }
 util.inherits(KProfiler, events.EventEmitter);
@@ -34,6 +35,9 @@ util.inherits(KProfiler, events.EventEmitter);
 KProfiler.prototype.onSignal = function onSignal() {
     var self = this;
     var now = Date.now();
+
+    // TODO: try to make the sig counter a state machine, and
+    // TODO: convert this function into a cleaner decision tree
 
     if (this.isBusy) {
         console.log("%s -- k-profiler: still busy, cannot start/stop a profile now", new Date().toISOString());
@@ -61,12 +65,12 @@ KProfiler.prototype.onSignal = function onSignal() {
                 console.log("%s -- k-profiler: capturing execution profile", new Date().toISOString());
                 v8profiler.startProfiling('', true);
                 self.isProfiling = true;
-            }, 200);
+            }, this.maxSignalDelay);
         }
 
         // on two signals back-to-back save a heap snapshot
         // Note: this is a blocking operation proportional to heap size, use with care.
-        if (now < this.lastProfileSignalTime + 200) {
+        if (now < this.lastProfileSignalTime + this.maxSignalDelay) {
             if (this.startProfiler) {
                 clearTimeout(this.startProfiler);
                 this.startProfiler = null;
@@ -95,7 +99,7 @@ KProfiler.prototype.uninstall = function uninstall() {
     return this;
 };
 
-KProfiler.prototype._exportProfile = function exportProfile( profile, profileName, profileFilename, maybeCallback ) {
+KProfiler.prototype._exportProfile = function _exportProfile( profile, profileName, profileFilename, maybeCallback ) {
     var self = this;
     profile.export()
         .pipe(fs.createWriteStream(profileFilename))
