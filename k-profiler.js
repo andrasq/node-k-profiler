@@ -26,16 +26,18 @@ function KProfiler( ) {
     this.isProfiling = false;           // set when gathering execution profile data
     this.isBusy = false;                // set when busy saving profile
     this.startProfiler = null;          // execution profile capture start timer
+    this._handler = null;
 }
 util.inherits(KProfiler, events.EventEmitter);
 
 KProfiler.prototype.install = function install() {
-    process.on('SIGUSR2', this.onSignal);
+    this._handler = this.onSignal.bind(this);
+    process.on('SIGUSR2', this._handler);
     return this;
 };
 
 KProfiler.prototype.uninstall = function uninstall() {
-    process.removeListener('SIGUSR2', this.onSignal);
+    process.removeListener('SIGUSR2', this._handler);
     return this;
 };
 
@@ -60,20 +62,7 @@ KProfiler.prototype.onSignal = function onSignal() {
         }
 
         var profileFilename = 'v8profile-' + new Date().toISOString() + '.cpuprofile';
-        profile.export()
-            .pipe(fs.createWriteStream(profileFilename))
-            .on('error', function(err) {
-                console.log("%s -- k-profiler: unable to save execution profile:", err.stack);
-                profile.delete();
-                self.isBusy = false;
-                self.emit('error', err);
-            })
-            .on('finish', function() {
-                console.log("%s -- k-profiler: saved execution profile to %s", new Date().toISOString(), profileFilename);
-                profile.delete();
-                self.isBusy = false;
-                self.emit('finish', profileFilename);
-            });
+        this.exportProfile(profile, 'execution profile', profileFilename);
     }
     else {
         // unless another signal arrives soon, start capturing the execution profile
@@ -97,20 +86,7 @@ KProfiler.prototype.onSignal = function onSignal() {
             this.isBusy = true;
             var profile = v8profiler.takeSnapshot();
             var profileFilename = 'heapdump-' + new Date(now).toISOString() + '.heapsnapshot';
-            profile.export()
-                .pipe(fs.createWriteStream(profileFilename))
-                .on('error', function(err) {
-                    console.log("%s -- k-profiler: unable to save heap snapshot:", err.stack);
-                    profile.delete();
-                    self.isBusy = false;
-                    self.emit('error', err);
-                })
-                .on('finish', function() {
-                    console.log("%s -- k-profiler: saved heap snapshot to %s", new Date().toISOString(), profileFilename);
-                    profile.delete();
-                    self.isBusy = false;
-                    self.emit('finish', profileFilename);
-                });
+            this.exportProfile(profile, 'heap snapshot', profileFilename);
         }
         else {
             this.lastProfileSignalTime = now;
@@ -118,5 +94,27 @@ KProfiler.prototype.onSignal = function onSignal() {
     }
 }
 
+KProfiler.prototype.exportProfile = function exportProfile( profile, profileName, profileFilename, maybeCallback ) {
+    var self = this;
+    profile.export()
+        .pipe(fs.createWriteStream(profileFilename))
+        .on('error', function(err) {
+            console.log("%s -- k-profiler: unable to save " + profileName + ":", err.stack);
+            profile.delete();
+            self.isBusy = false;
+            self.emit('error', err);
+            if (maybeCallback) maybeCallback(err);
+        })
+        .on('finish', function() {
+            console.log("%s -- k-profiler: saved " + profileName + " to %s", new Date().toISOString(), profileFilename);
+            profile.delete();
+            self.isBusy = false;
+            self.emit('finish', profileFilename);
+            if (maybeCallback) maybeCallback();
+        });
+}
 
-module.exports = new KProfiler().install();
+
+// export a singleton with the signal listener installed
+var singleton = new KProfiler().install();
+module.exports = singleton;
