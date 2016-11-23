@@ -50,6 +50,10 @@ This is the default, and is done automatically when `k-profiler` is included.
 Do not response to signals, let the system handle SIGUSR2 events as it normally
 does.  Note that the default action on an uncaught signal is to exit.
 
+### Events
+
+- `'finish'` - emitted whenever finished saving to a file; returns the filename
+
 
 Related Work
 ------------
