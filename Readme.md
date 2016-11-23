@@ -50,6 +50,14 @@ This is the default, and is done automatically when `k-profiler` is included.
 Do not response to signals, let the system handle SIGUSR2 events as it normally
 does.  Note that the default action on an uncaught signal is to exit.
 
+### profiler.verbose( yesno )
+
+Turn off/on the k-profiler console.log tracers that track profiling actions.
+Tracers are enabled by default.  The output is like
+
+    2016-11-23T17:39:05.423Z -- k-profiler: capturing heap snapshot
+    2016-11-23T17:39:05.532Z -- k-profiler: saved heap snapshot to heapdump-2016-11-23T17:39:05.423Z.heapsnapshot
+
 ### Events
 
 - `'finish'` - emitted whenever finished saving to a file; returns the filename

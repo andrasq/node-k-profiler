@@ -23,11 +23,15 @@ var util = require('util');
 
 function KProfiler( ) {
     events.EventEmitter.call(this);
-    this.lastProfileSignalTime = 0;     // detect back-to-back SIGUSR2 signals
+
+    this.maxSignalDelay = 50;           // longest back-to-back signal spacing
+    this.verbose = true;                // report on actions
+
+    this.lastProfileSignalTime = 0;     // to detect back-to-back SIGUSR2 signals
     this.isProfiling = false;           // set when gathering execution profile data
     this.isBusy = false;                // set when busy saving profile
     this.startProfiler = null;          // execution profile capture start timer
-    this.maxSignalDelay = 50;           // longest back-to-back signal spacing
+
     this._handler = null;
 }
 util.inherits(KProfiler, events.EventEmitter);
@@ -40,7 +44,7 @@ KProfiler.prototype.onSignal = function onSignal() {
     // TODO: convert this function into a cleaner decision tree
 
     if (this.isBusy) {
-        console.log("%s -- k-profiler: still busy, cannot start/stop a profile now", new Date().toISOString());
+        this.log("still busy, cannot start/stop a profile now");
         return;
     }
 
@@ -51,7 +55,7 @@ KProfiler.prototype.onSignal = function onSignal() {
         this.startProfiler = null;
         this.isProfiling = false;
         if (!profile) {
-            console.log("%s -- k-profiler: unable to obtain execution profile", new Date().toISOString());
+            this.log("unable to obtain execution profile");
             return;
         }
 
@@ -62,7 +66,7 @@ KProfiler.prototype.onSignal = function onSignal() {
         // unless another signal arrives soon, start capturing the execution profile
         if (!this.startProfiler) {
             this.startProfiler = setTimeout(function() {
-                console.log("%s -- k-profiler: capturing execution profile", new Date().toISOString());
+                self.log("capturing execution profile");
                 v8profiler.startProfiling('', true);
                 self.isProfiling = true;
             }, this.maxSignalDelay);
@@ -75,7 +79,7 @@ KProfiler.prototype.onSignal = function onSignal() {
                 clearTimeout(this.startProfiler);
                 this.startProfiler = null;
             }
-            console.log("%s -- k-profiler: capturing heap snapshot", new Date().toISOString());
+            this.log("capturing heap snapshot");
 
             this.isBusy = true;
             var profile = v8profiler.takeSnapshot();
@@ -86,6 +90,16 @@ KProfiler.prototype.onSignal = function onSignal() {
             this.lastProfileSignalTime = now;
         }
     }
+}
+
+KProfiler.prototype.log = function log(format, arg1) {
+    if (this.verbose) {
+        console.log(new Date().toISOString() + " -- k-profiler: " + util.format.apply(null, arguments));
+    }
+}
+
+KProfiler.prototype.verbose = function verbose( yesno ) {
+    this.verbose = yesno ? true : false;
 }
 
 KProfiler.prototype.install = function install() {
@@ -104,14 +118,14 @@ KProfiler.prototype._exportProfile = function _exportProfile( profile, profileNa
     profile.export()
         .pipe(fs.createWriteStream(profileFilename))
         .on('error', function(err) {
-            console.log("%s -- k-profiler: unable to save " + profileName + ":", err.stack);
+            self.log("%s -- k-profiler: unable to save " + profileName + ":", err.stack);
             profile.delete();
             self.isBusy = false;
             self.emit('error', err);
             if (maybeCallback) maybeCallback(err);
         })
         .on('finish', function() {
-            console.log("%s -- k-profiler: saved " + profileName + " to %s", new Date().toISOString(), profileFilename);
+            self.log("saved " + profileName + " to %s", profileFilename);
             profile.delete();
             self.isBusy = false;
             self.emit('finish', profileFilename);
@@ -119,7 +133,9 @@ KProfiler.prototype._exportProfile = function _exportProfile( profile, profileNa
         });
 }
 
+// optimize access:  assigning prototype converts the assigned hash to struct
+KProfiler.prototype = KProfiler.prototype;
 
-// export a singleton with the signal listener installed
+// export a singleton with the signal listener already installed
 var singleton = new KProfiler().install();
 module.exports = singleton;
