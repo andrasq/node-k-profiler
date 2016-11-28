@@ -8,20 +8,20 @@ Summary:
 
     require('k-profiler');
 
-K-profiler installs a signal handler for SIGUSR2, causing the app to toggle
-execution trace capture on a single USR2 signal, and to save a heap snapshot on two
-back-to-back USR2 signals.  The files are plain-text json format.
+K-profiler installs handlers for SIGUSR1 and SIGUSR2, causing the app to toggle
+execution trace capture on the USR1 signal, and to save a heap snapshot on the USR2
+signal.  The files are plain-text json format.
 
 To tell the app to capture an execution trace, send it a SIGUSR2 to start the
 trace, and another SIGUSR2 to stop the trace and write the results.
 
-    # one signal starts an execution trace, a second signal saves it to file
-    $ kill -USR2 $pid ; sleep 2 ; kill -USR2 $pid
+    # first signal starts an execution trace, the second signal saves it to file
+    $ kill -USR1 $pid ; sleep 2 ; kill -USR1 $pid
 
-To tell the app to capture a heap snapshot, sent it two back-to-back SIGUSR2 signals.
+To tell the app to capture a heap snapshot, sent it a SIGUSR2 signal.
 
-    # two back-to-back signals capture a heap trace
-    $ kill -USR2 $pid ; kill -USR2 $pid
+    # a USR2 signal captures a heap snapshot
+    $ kill -USR2 $pid
 
 
 Files
@@ -32,7 +32,7 @@ Heap snapshots are named eg `heapdump-2016-11-21T18:21:41.345Z-heapsnapshot`.
 Files are created in the app working directory.
 
 Traces and snapshots can be viewed with Chrome or Opera by loading them with
-Profiles : Load under Tools : More Tools : Developer Tools.
+`Profiles : Load` under `Tools : More Tools : Developer Tools`.
 
 
 Api
@@ -42,22 +42,29 @@ Api
 
 ### Events
 
-- `'finish'` - emitted whenever finished saving to a file; returns the filename
+- `'busy'` - sent if a SIGUSR1 or SIGUSR2 is received while busy saving a file
+  and unable to write a new trace.  Returns the signal name.
+- `'finish'` - emitted whenever finished saving a file. Returns the filename.
+- `'signal'` - emitted to confirm receiving a SIGUSR1 or SIGUSR2 signal.
+  Returns the signal name.  Useful for testing.
 
 ### profiler.install( )
 
-Respond to SIGUSR2 events by writing process traces or heap snapshots.
-This is the default, and is done automatically when `k-profiler` is included.
+Respond to SIGUSR1 and SIGUSR2 events by writing process traces or heap snapshots,
+respectively.  The signal handlers are installed by, and is done automatically when
+`k-profiler` is included.  Use `uninstall` to not respond to signals.
 
 ### profiler.uninstall( )
 
 Do not response to signals, let the system handle SIGUSR2 events as it normally
-does.  Note that the default action on an uncaught signal is to exit.
+does.  Note that the default action on an uncaught signal is to exit.  Use `install`
+to respond to signals again.
 
-### profiler.verbose( yesno )
+### profiler.verbose( [yesno] )
 
 Turn off/on the k-profiler console.log tracers that track profiling actions.
-Tracers are enabled by default.  The output is like
+Tracers are enabled by default.  `verbose()` without an argument return the current
+setting.  The output is like
 
     2016-11-23T17:39:05.423Z -- k-profiler: capturing heap snapshot
     2016-11-23T17:39:05.532Z -- k-profiler: saved heap snapshot to heapdump-2016-11-23T17:39:05.423Z.heapsnapshot

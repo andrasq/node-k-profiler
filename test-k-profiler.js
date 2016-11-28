@@ -33,16 +33,36 @@ describe ('k-profiler', function() {
         done();
     })
 
+    it ('should return current verbosity setting', function(done) {
+        assert.strictEqual(profiler.verbose(), true);
+        done();
+    })
+
+    it ('should change verbosity setting', function(done) {
+        profiler.verbose(0);
+        assert.strictEqual(profiler.verbose(), false);
+        profiler.verbose("yes");
+        assert.strictEqual(profiler.verbose(), true);
+        done();
+    })
+
     it ('should capture an execution trace', function(done) {
+        var onSignalSignal = false;
+        profiler.once('signal', function(signal){ onSignalSignal = signal });
+        var onFinishFilename = false;
+        profiler.once('finish', function(filename){ onFinishFilename = filename });
+
+        process.kill(process.pid, 'SIGUSR1');
+
         var before = new Date().toISOString();
-        process.kill(process.pid, 'SIGUSR2');
         setTimeout(function() {
-            process.kill(process.pid, 'SIGUSR2');
-            profiler.once('finish', function(filename) {
+            process.kill(process.pid, 'SIGUSR1');
+            profiler.once('finish', function() {
                 var after = new Date().toISOString();
+                assert.equal(onSignalSignal, 'SIGUSR1');
                 var newFiles = findNewFiles(before, after);
                 assert.equal(newFiles.length, 1);
-                assert.equal(newFiles[0], filename);
+                assert.equal(newFiles[0], onFinishFilename);
                 fs.unlinkSync(newFiles[0]);
                 done();
             })
@@ -50,14 +70,20 @@ describe ('k-profiler', function() {
     })
 
     it ('should capture a heap snapshot', function(done) {
+        var onSignalSignal = false;
+        profiler.once('signal', function(signal){ onSignalSignal = signal });
+        var onFinishFilename = false;
+        profiler.once('finish', function(filename){ onFinishFilename = filename });
+
+        process.kill(process.pid, 'SIGUSR2');
+
         var before = new Date().toISOString();
-        process.kill(process.pid, 'SIGUSR2');
-        process.kill(process.pid, 'SIGUSR2');
-        profiler.once('finish', function(filename) {
+        profiler.once('finish', function() {
             var after = new Date().toISOString();
+            assert.equal(onSignalSignal, 'SIGUSR2');
             var newFiles = findNewFiles(before, after);
             assert.equal(newFiles.length, 1);
-            assert.equal(newFiles[0], filename);
+            assert.equal(newFiles[0], onFinishFilename);
             assert.ok(newFiles[0].match(/^heapdump-.*\.heapsnapshot/));
             fs.unlinkSync(newFiles[0]);
             done();
@@ -65,74 +91,56 @@ describe ('k-profiler', function() {
     })
 
     it ('should not create files if uninstalled', function(done) {
-        // listen for the signal else process exits
+        // install a signal handler else the process exits on USR2
         process.on('SIGUSR2', function(){});
 
-        // listen for the first created file
-        function onFinish() { done(new Error("finish should not have been called")) }
-        profiler.once('finish', onFinish);
+        // listen for confirmation of receipt of the signal
+        function onSignal() { done(new Error("should not have received the signal")) }
+        profiler.once('signal', onSignal);
 
         // ask for a heap snapshot
         profiler.uninstall();
         process.kill(process.pid, 'SIGUSR2');
-        process.kill(process.pid, 'SIGUSR2');
 
-        // the test snapshot should take under .2 seconds, but wait a little extra
+        // a signal is received almost immediately, but wait 1/50th of second
         setTimeout(function() {
-            profiler.removeListener('finish', onFinish);
-            profiler.install();
+            profiler.removeListener('signal', onSignal);
+            profiler.install()
             done();
-        }, 250);
+        }, 20);
     })
 
     describe ('edge cases', function() {
 
         it ('should ignore signal during heap snapshot save', function(done) {
+            var finishCount = 0;
+            function onFinish() { finishCount += 1; assert(finishCount < 2) }
+            profiler.on('finish', onFinish);
+
+            var busyCount = 0;
+            function onBusy() { busyCount += 1; }
+            profiler.on('busy', onBusy);
+
             var before = new Date().toISOString();
+
+            // ask for a trace and another snapshot during a heap snapshot
             process.kill(process.pid, 'SIGUSR2');
+            process.kill(process.pid, 'SIGUSR1');
             process.kill(process.pid, 'SIGUSR2');
-            process.kill(process.pid, 'SIGUSR2');
-            process.kill(process.pid, 'SIGUSR2');
-            profiler.once('finish', function(filename) {
-                var after = new Date().toISOString();
-                var newFiles = findNewFiles(before, after);
-                assert.equal(newFiles.length, 1);
-                assert.equal(newFiles[0], filename);
-                assert.ok(newFiles[0].match(/^heapdump/));
-                fs.unlinkSync(newFiles[0]);
-                done();
-            })
+            profiler.once('finish', function() {
+                assert.equal(finishCount, 1);
+                assert.equal(busyCount, 2);
+                profiler.removeListener('finish', onFinish);
+                // wait another 1/4 sec to confirm that no files were created
+                setTimeout(function() {
+                    var newFiles = findNewFiles(before, after);
+                    assert.equal(newFiles.length, 1);
+                    assert.ok(newFiles[0].match(/^heapdump/));
+                    fs.unlinkSync(newFiles[0]);
+                    done();
+                }, 250);
+            });
         })
-
-        it ('should halt execution trace on back-to-back signals', function(done) {
-            var before = new Date().toISOString();
-            process.kill(process.pid, 'SIGUSR2');
-            setTimeout(function() {
-                // the first set of back-to-back signals should halt the execution trace
-                process.kill(process.pid, 'SIGUSR2');
-                process.kill(process.pid, 'SIGUSR2');
-                profiler.once('finish', function(filename) {
-                    // should halt the execution trace
-                    assert.ok(filename.match(/^v8profile/));
-
-                    // a second set of back-to-back signals should save a heap snapshot
-                    process.kill(process.pid, 'SIGUSR2');
-                    process.kill(process.pid, 'SIGUSR2');
-                    profiler.once('finish', function(filename) {
-                        var after = new Date().toISOString();
-                        var newFiles = findNewFiles(before, after);
-                        assert.equal(newFiles.length, 2);
-                        // newFiles are returned in create-time order
-                        assert.ok(newFiles[0].match(/^v8profile/));
-                        assert.ok(newFiles[1].match(/^heapdump/));
-                        fs.unlinkSync(newFiles[0]);
-                        fs.unlinkSync(newFiles[1]);
-                        done();
-                    });
-                })
-            }, profiler.maxSignalDelay + 5);
-        })
-
     })
 
 })
