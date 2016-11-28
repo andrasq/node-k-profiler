@@ -21,7 +21,7 @@ trace, and another SIGUSR2 to stop the trace and write the results.
 To tell the app to capture a heap snapshot, sent it two back-to-back SIGUSR2 signals.
 
     # two back-to-back signals capture a heap trace
-    $ kill -USR2 $pid ; kill -USR2 $pid ; 
+    $ kill -USR2 $pid ; kill -USR2 $pid
 
 
 Files
@@ -29,7 +29,7 @@ Files
 
 Execution traces are named eg `v8profile-2016-11-21T18:21:41.345Z-cpuprofile`.
 Heap snapshots are named eg `heapdump-2016-11-21T18:21:41.345Z-heapsnapshot`.
-Files are placed into the app working directory.
+Files are created in the app working directory.
 
 Traces and snapshots can be viewed with Chrome or Opera by loading them with
 Profiles : Load under Tools : More Tools : Developer Tools.
@@ -39,6 +39,10 @@ Api
 ---
 
     var profiler = require('k-profiler');
+
+### Events
+
+- `'finish'` - emitted whenever finished saving to a file; returns the filename
 
 ### profiler.install( )
 
@@ -57,10 +61,6 @@ Tracers are enabled by default.  The output is like
 
     2016-11-23T17:39:05.423Z -- k-profiler: capturing heap snapshot
     2016-11-23T17:39:05.532Z -- k-profiler: saved heap snapshot to heapdump-2016-11-23T17:39:05.423Z.heapsnapshot
-
-### Events
-
-- `'finish'` - emitted whenever finished saving to a file; returns the filename
 
 
 Related Work
