@@ -57,10 +57,14 @@ KProfiler.prototype.onUsr1Signal = function onUsr1Signal() {
             var self = this;
             var profileFilename = 'v8profile-' + new Date().toISOString() + '.cpuprofile';
             this._exportProfile(profile, 'execution profile', profileFilename, function(err) {
+                if (err) this.log("error saving execution profile: %s", err.stack);
                 self.isBusy = false;
             });
         }
-        else this.log("unable to obtain execution profile");
+        else {
+            this.log("unable to obtain execution profile");
+            this.isBusy = false;
+        }
     }
     return this;
 }
@@ -78,10 +82,14 @@ KProfiler.prototype.onUsr2Signal = function onUsr2Signal() {
     if (profile) {
         var self = this;
         this._exportProfile(profile, 'heap snapshot', profileFilename, function(err) {
+            if (err) this.log("error saving heap snapshot: %s", err.stack);
             self.isBusy = false;
         });
     }
-    else this.log("unable to obtain heap snapshot");
+    else {
+        this.log("unable to obtain heap snapshot");
+        this.isBusy = false;
+    }
     return this;
 }
 
