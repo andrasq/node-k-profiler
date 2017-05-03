@@ -15,7 +15,7 @@
   "devDependencies": {
   },
   "scripts": {
-    "test": "mocha --version && mocha -b test-k-profiler.js || echo 'mocha not installed; try \"npm install -g mocha\"'",
+    "test": "mocha --version && mocha -b test-k-profiler.js",
     "coverage": "nyc --version && nyc --include k-profiler.js mocha test-k-profiler.js || echo 'nyc not installed; try \"npm install -g nyc\"'"
   }
 }
