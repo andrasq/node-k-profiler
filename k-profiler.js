@@ -77,6 +77,7 @@ KProfiler.prototype.onUsr2Signal = function onUsr2Signal() {
     if (this._checkIfBusy('SIGUSR2')) return this;
 
     this.isBusy = true;
+    this.log("capturing heap snapshot");
     var profile = v8profiler.takeSnapshot();
     var profileFilename = 'heapdump-' + new Date().toISOString() + '.heapsnapshot';
     if (profile) {
