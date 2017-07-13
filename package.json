@@ -1,6 +1,6 @@
 {
   "name": "@kinvey/profiler",
-  "version": "0.5.2",
+  "version": "0.5.3-dev",
   "description": "kinvey convenience wrapper around v8-profiler",
   "main": "k-profiler.js",
   "keywords": ["v8", "profiler", "heapdump", "memory", "leak", "cpu", "usage"],
