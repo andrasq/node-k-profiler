@@ -6,14 +6,14 @@ no-code-needed convenient like [heapdump](https://npmjs.org/package/heapdump).
 
 Summary:
 
-    require('k-profiler');
+    require('@kinvey/profiler');
 
 K-profiler installs handlers for SIGUSR1 and SIGUSR2, causing the app to toggle
 execution trace capture on the USR1 signal, and to save a heap snapshot on the USR2
 signal.  The files are plain-text json format.
 
-To tell the app to capture an execution trace, send it a SIGUSR2 to start the
-trace, and another SIGUSR2 to stop the trace and write the results.
+To tell the app to capture an execution trace, send it a SIGUSR1 to start the
+trace, and another SIGUSR1 to stop the trace and write the results.
 
     # first signal starts an execution trace, the second signal saves it to file
     $ kill -USR1 $pid ; sleep 2 ; kill -USR1 $pid
@@ -39,15 +39,15 @@ Tools`.
 Api
 ---
 
-Including `k-profiler` automatically installs signal handlers for SIGUSR1 and
+Including `@kinvey/profiler` automatically installs signal handlers for SIGUSR1 and
 SIGUSR2 to capture execution traces and heap snapshots, respectively.
 
-    var kprofiler = require('k-profiler');
+    var kprofiler = require('@kinvey/profiler');
 
 ### profiler.install( )
 
 Respond to SIGUSR1 and SIGUSR2 events by writing process traces or heap snapshots,
-respectively.  The signal handlers are installed automatically when `k-profiler` is
+respectively.  The signal handlers are installed automatically when `@kinvey/profiler` is
 included.  Use `uninstall()` to not respond to signals.
 
 ### profiler.uninstall( )
