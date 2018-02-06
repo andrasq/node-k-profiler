@@ -82,3 +82,6 @@ Related Work
 - [qrusage](https://npmjs.org/package/qrusage) - fast `getrusage(2)` bindigs to report cpu usage
 - [heapdump](https://npmjs.org/package/heapdump) - save heap snapshots on SIGUSR2
 - [v8-profiler](https://npmjs.org/package/v8-profiler) - v8 execution profiler
+- [@risingstack/v8-profiler](https://npmjs.org/package/@risingstack/v8-profiler) - fork
+- [v8-profiler-node8]https://npmjs.com/package/v8-profiler-node8() - fork
+- [node-oom-heapdump](https://www.npmjs.com/package/node-oom-heapdump) - fork

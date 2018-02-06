@@ -1,6 +1,6 @@
 {
   "name": "@kinvey/profiler",
-  "version": "0.5.3-dev",
+  "version": "0.6.0",
   "description": "kinvey convenience wrapper around v8-profiler",
   "main": "k-profiler.js",
   "keywords": ["v8", "profiler", "heapdump", "memory", "leak", "cpu", "usage"],
@@ -10,12 +10,13 @@
   "license": "Kinvey",
   "repository": "git+ssh://github.com/andrasq/node-k-profiler",
   "dependencies": {
-    "v8-profiler": "5.7.0"
+    "@risingstack/v8-profiler": "5.7.11"
   },
   "devDependencies": {
   },
   "scripts": {
     "test": "mocha --version && mocha -b test-k-profiler.js",
-    "coverage": "nyc --version && nyc --include k-profiler.js mocha test-k-profiler.js || echo 'nyc not installed; try \"npm install -g nyc\"'"
+    "coverage": "nyc --include k-profiler.js --reporter lcov --reporter text mocha test-k-profiler.js",
+    "clean": "rm -rf .nyc_output/ coverage/"
   }
 }
