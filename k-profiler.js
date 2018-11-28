@@ -26,6 +26,7 @@ function KProfiler( ) {
 
     this.maxSignalDelay = 50;           // longest back-to-back signal spacing
     this._verbose = true;               // report on actions
+    this._outputDir = '';               // where to write files
 
     this.isProfiling = false;           // set when gathering execution profile data
     this.isBusy = false;                // set when busy saving profile
@@ -34,6 +35,15 @@ function KProfiler( ) {
     this._handleUsr2 = null;
 }
 util.inherits(KProfiler, events.EventEmitter);
+
+KProfiler.prototype.configure = function configure( options ) {
+    options = options || {};
+
+    if (options.outputDir !== undefined) {
+        this._outputDir = String(options.outputDir);
+        if (this._outputDir && this._outputDir[this._outputDir.length - 1] !== '/') this._outputDir += '/';
+    }
+}
 
 /*
  * on SIGUSR1 start/stop execution profiling
@@ -53,9 +63,9 @@ KProfiler.prototype.onUsr1Signal = function onUsr1Signal() {
         var profile = v8profiler.stopProfiling('');
         this.isProfiling = false;
         this.isBusy = true;
+        var profileFilename = this._outputDir + 'v8profile-' + new Date().toISOString() + '.cpuprofile';
         if (profile) {
             var self = this;
-            var profileFilename = 'v8profile-' + new Date().toISOString() + '.cpuprofile';
             this._exportProfile(profile, 'execution profile', profileFilename, function(err) {
                 if (err) this.log("error saving execution profile: %s", err.stack);
                 self.isBusy = false;
@@ -79,7 +89,7 @@ KProfiler.prototype.onUsr2Signal = function onUsr2Signal() {
     this.isBusy = true;
     this.log("capturing heap snapshot");
     var profile = v8profiler.takeSnapshot();
-    var profileFilename = 'heapdump-' + new Date().toISOString() + '.heapsnapshot';
+    var profileFilename = this._outputDir + 'heapdump-' + new Date().toISOString() + '.heapsnapshot';
     if (profile) {
         var self = this;
         this._exportProfile(profile, 'heap snapshot', profileFilename, function(err) {

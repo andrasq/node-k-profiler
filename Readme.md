@@ -56,6 +56,14 @@ Do not respond to signals, let the system handle SIGUSR2 events as it normally
 does.  Note that the default action on an uncaught signal is to exit.  Use `install()`
 to respond to signals again.
 
+### profiler.configure( options )
+
+Adjust the built-in settings.
+
+Options:
+- `outputDir` - directory where to place the output, default `''` the process
+  current working directory
+
 ### profiler.verbose( [yesno] )
 
 Turn off/on the k-profiler console.log tracers that track profiling actions.

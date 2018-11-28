@@ -90,6 +90,33 @@ describe ('k-profiler', function() {
         })
     })
 
+    it ('should configure output directory', function(done) {
+        assert.equal(profiler._outputDir, '');
+        profiler.configure({ outputDir: '/tmp' });
+        assert.equal(profiler._outputDir, '/tmp/');
+        profiler.configure({ outputDir: '/tmp/' });
+        assert.equal(profiler._outputDir, '/tmp/');
+        var writeCount = 0;
+        profiler.on('finish', function listener(filepath) {
+            fs.unlink(filepath);
+            assert.ok(/^\/tmp\//.test(filepath));
+            writeCount += 1;
+            if (writeCount ===  2) {
+                profiler.configure({ outputDir: '' });
+                assert.equal(profiler._outputDir, '');
+                profiler.removeListener('finish', listener);
+                done();
+            }
+        })
+        // cpuprofile
+        process.kill(process.pid, 'SIGUSR1');
+        process.kill(process.pid, 'SIGUSR1');
+        // heapsnapshot
+        profiler.once('finish', function() {
+            process.kill(process.pid, 'SIGUSR2');
+        })
+    })
+
     it ('should not create files if uninstalled', function(done) {
         // install a signal handler else the process exits on USR2
         process.on('SIGUSR2', function(){});
@@ -111,6 +138,12 @@ describe ('k-profiler', function() {
     })
 
     describe ('edge cases', function() {
+
+        it ('config should tolerate missing args', function(done) {
+            profiler.configure();
+            profiler.configure({});
+            done();
+        })
 
         it ('should ignore signal during heap snapshot save', function(done) {
             var finishCount = 0;
@@ -146,11 +179,12 @@ describe ('k-profiler', function() {
 })
 
 // find profiler files created between the before and after ISOString timestamps
-function findNewFiles( before, after ) {
+function findNewFiles( before, after, dirname ) {
+    dirname = dirname || process.cwd();
     var newFiles;
 
     // find all our profile files
-    newFiles = fs.readdirSync(process.cwd()).filter(function(filename) {
+    newFiles = fs.readdirSync(dirname).filter(function(filename) {
         if (/^v8profile/.test(filename)) {
             return filename >= ('v8profile-' + before + '.json') && filename <= ('v8profile-' + after + '.json');
         }
