@@ -8,7 +8,6 @@
     "node": ">= 0.10"
   },
   "license": "Kinvey",
-  "private": "true",
   "repository": "git+ssh://github.com/andrasq/node-k-profiler",
 
   "dependencies": {
