@@ -1,6 +1,6 @@
 {
   "name": "@progresskinvey/profiler",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "kinvey convenience wrapper around v8-profiler",
   "main": "k-profiler.js",
   "keywords": ["v8", "profiler", "heapdump", "memory", "leak", "cpu", "usage"],
@@ -8,7 +8,8 @@
     "node": ">= 0.10"
   },
   "license": "Kinvey",
-  "repository": "git+ssh://github.com/andrasq/node-k-profiler",
+  "repository": { "type": "git", "url": "git+ssh://github.com/andrasq/node-k-profiler" },
+  "readme": "see README.md in the repo",
 
   "dependencies": {
     "@risingstack/v8-profiler": "https://github.com/andrasq/v8-profiler#build-for-node-v10"

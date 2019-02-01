@@ -1,7 +1,8 @@
 k-profiler
 ----------
 
-- 0.7.1 - publish to @progresskinvey/profiler
+- 0.7.2 - publish to @progresskinvey/profiler
+- 0.7.1 - (skipped)
 - 0.7.0 - configure() function
 - 0.6.1 - upgrade deps for node-v10 compatibility
 - 0.6.0 - switch back to @risingstack/v8-profiler for node-v8 support
