@@ -6,7 +6,7 @@ no-code-needed convenient like [heapdump](https://npmjs.org/package/heapdump).
 
 Summary:
 
-    require('@progresskinvey/profiler');
+    require('k-profiler');
 
 K-profiler installs handlers for SIGUSR1 and SIGUSR2, causing the app to toggle
 execution trace capture on the USR1 signal, and to save a heap snapshot on the USR2
@@ -39,15 +39,15 @@ Tools`.
 Api
 ---
 
-Including `@progresskinvey/profiler` automatically installs signal handlers for SIGUSR1 and
+Including `k-profiler` automatically installs signal handlers for SIGUSR1 and
 SIGUSR2 to capture execution traces and heap snapshots, respectively.
 
-    var kprofiler = require('@progresskinvey/profiler');
+    var kprofiler = require('k-profiler');
 
 ### profiler.install( )
 
 Respond to SIGUSR1 and SIGUSR2 events by writing process traces or heap snapshots,
-respectively.  The signal handlers are installed automatically when `@progresskinvey/profiler` is
+respectively.  The signal handlers are installed automatically when `k-profiler` is
 included.  Use `uninstall()` to not respond to signals.
 
 ### profiler.uninstall( )
@@ -91,5 +91,6 @@ Related Work
 - [heapdump](https://npmjs.org/package/heapdump) - save heap snapshots on SIGUSR2
 - [v8-profiler](https://npmjs.org/package/v8-profiler) - v8 execution profiler
 - [@risingstack/v8-profiler](https://npmjs.org/package/@risingstack/v8-profiler) - fork
+- [andrasq-v8-profiler](https://npmjs.org/package/andrasq-v8-profiler) - fork of fork
 - [v8-profiler-node8]https://npmjs.com/package/v8-profiler-node8() - fork
 - [node-oom-heapdump](https://www.npmjs.com/package/node-oom-heapdump) - fork

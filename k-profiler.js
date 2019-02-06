@@ -16,7 +16,7 @@
 'use strict';
 
 var fs = require('fs');
-var v8profiler = require('@progresskinvey/v8-profiler');
+var v8profiler = require('andrasq-v8-profiler');
 var events = require('events');
 var util = require('util');
 
