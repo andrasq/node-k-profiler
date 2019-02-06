@@ -1,6 +1,6 @@
 {
-  "name": "@progresskinvey/profiler",
-  "version": "0.7.3",
+  "name": "k-profiler",
+  "version": "0.8.0",
   "description": "kinvey convenience wrapper around v8-profiler",
   "main": "k-profiler.js",
   "keywords": ["v8", "profiler", "heapdump", "memory", "leak", "cpu", "usage"],
@@ -12,7 +12,7 @@
   "readme": "see README.md in the repo",
 
   "dependencies": {
-    "@progresskinvey/v8-profiler": "5.7.12-b"
+    "andrasq-v8-profiler": "5.7.12-c"
   },
   "devDependencies": {
   },

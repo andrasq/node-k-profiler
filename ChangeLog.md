@@ -1,6 +1,8 @@
 k-profiler
 ----------
 
+- 0.8.0 - restore k-profiler name, change dependency to public npm
+- 0.7.3 - bump @progresskinvey dependency
 - 0.7.2 - publish to @progresskinvey/profiler
 - 0.7.1 - (skipped)
 - 0.7.0 - configure() function
